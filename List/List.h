@@ -73,7 +73,19 @@ template<class T>
       }
 
       List(const List<T>& l);
-      List<T>& operator=(List<T> l);
+      List<T>& operator=(List<T> l)
+      {
+        if(*this != l)
+        {
+          Swap(l);
+        }
+        return *this;
+      }
+
+      void Swap(List<T> l)
+      {
+        swap(_head,l._head);
+      }
       
       //成员函数
       void PushBack(const T& x)
@@ -117,8 +129,26 @@ template<class T>
         tmp = NULL;
       }
 
-      void Insert(iterator pos,const T& x);
-      void Earse(iterator pos);
+      void Insert(iterator pos,const T& x) //指定位置之后插入
+      {
+        Node* newnode = new Node(x);
+        Node* tmp = pos._node;
+        Node* pnext = tmp->_next;
+        tmp->_next = newnode;
+        newnode->_prev = tmp;
+        newnode->_next = pnext;
+        pnext->_prev = newnode;
+      }
+
+      void Earse(iterator pos)
+      {
+        Node* del = pos._node;
+        Node* nex = del->_next;
+        del->_prev->_next = nex;
+        nex->_prev = del->_prev;;
+        delete del;
+        del = NULL;
+      }
      
       bool empty()
       {
@@ -147,12 +177,14 @@ void Test()
   l.PushBack(1);
   l.PushBack(2);
   l.PushBack(3);
-  l.PushFront(4);
-  l.PushFront(5);
+  l.PushBack(4);
+  l.PushFront(1);
   //l.PopBack();
   //l.PopBack();
   l.PopFront();
-  l.PushFront();
+  l.Insert(l.begin(),0);
+  //l.Earse(++l.begin());
+
   List<int>::iterator it = l.begin();
   while(it != l.end())
   {
