@@ -20,11 +20,11 @@ template<class T>
 
   };
   //迭代器的实现 
-  template<class T>
+  template<class T,class Ref,class Ptr>
     struct _ListIterator
     {
       typedef ListNode<T> Node;
-      typedef _ListIterator<T> Self;
+      typedef _ListIterator<T,Ref,Ptr> Self;
 
       Node* _node;
 
@@ -32,7 +32,7 @@ template<class T>
                 :_node(node)
       {}
 
-      T operator*()
+      Ref operator*()
       {
         return _node->_data;
       }
@@ -54,13 +54,24 @@ template<class T>
     {
       typedef ListNode<T> Node;
     public:
-      typedef _ListIterator<T> iterator;
+      typedef _ListIterator<T,T&,T*> iterator;
+      typedef _ListIterator<T,const T&,const T*> const_iterator;
       iterator begin()
       {
         return _head->_next;
       }
 
       iterator end()
+      {
+        return _head;
+      }
+
+      const_iterator cbegin()const 
+      {
+        return _head->_next;
+      }
+
+      const_iterator cend()const 
       {
         return _head;
       }
@@ -72,7 +83,26 @@ template<class T>
         _head->_prev = _head;
       }
 
-      List(const List<T>& l);
+      List(const List<T>& l)
+      {
+        _head = new Node;
+        _head->_next = _head;
+        _head->_prev = _head;
+        const_iterator it = l.cbegin();
+        while(it != l.cend())
+        {
+          PushBack((*it));
+          ++it;
+        }
+      }
+
+      ~List()
+      {
+        Clear();
+        delete _head;
+        _head = NULL;
+      }
+
       List<T>& operator=(List<T> l)
       {
         if(*this != l)
@@ -80,6 +110,18 @@ template<class T>
           Swap(l);
         }
         return *this;
+      }
+
+      void Clear()
+      {
+        Node* cur = _head->_next;
+        while(cur != _head){
+          Node* tmp = cur->_next;
+          delete cur;
+          cur = tmp;
+        }
+        _head->_next = _head;
+        _head->_prev = _head;
       }
 
       void Swap(List<T> l)
@@ -90,64 +132,76 @@ template<class T>
       //成员函数
       void PushBack(const T& x)
       {
-        Node* tmp = new Node(x);
-        Node* tail = _head->_prev;
+        //Node* tmp = new Node(x);
+        //Node* tail = _head->_prev;
 
-        tail->_next = tmp;
-        tmp->_prev = tail;
-        _head->_prev = tmp;
-        tmp->_next = _head;
+        //tail->_next = tmp;
+        //tmp->_prev = tail;
+        //_head->_prev = tmp;
+        //tmp->_next = _head;
+        
+        Insert(end(),x);
       }
 
       void PopBack()
       {
-        assert(_head);
-        Node* tmp = _head->_prev;
-        Node* tail = tmp->_prev;
-        tail->_next = _head;
-        _head->_prev = tail;
-        delete tmp;
-        tmp = NULL;
+        //assert(_head);
+        //Node* tmp = _head->_prev;
+        //Node* tail = tmp->_prev;
+        //tail->_next = _head;
+        //_head->_prev = tail;
+        //delete tmp;
+        //tmp = NULL;
+        
+        Earse(end());
       }
 
       void PushFront(const T& x)
       {
-        Node* tmp = new Node(x);
-        Node *ret = _head->_next;
-        _head->_next = tmp;
-        tmp->_prev = _head;
-        tmp->_next = ret;
-        ret->_prev = tmp;
+        //Node* tmp = new Node(x);
+        //Node *ret = _head->_next;
+        //_head->_next = tmp;
+        //tmp->_prev = _head;
+        //tmp->_next = ret;
+        //ret->_prev = tmp;
+        
+        Insert(begin(),x);
       }
 
       void PopFront()
       {
-        assert(_head);
-        Node* tmp = _head->_next;
-        _head->_next = tmp->_next;
-        delete tmp;
-        tmp = NULL;
+        //assert(_head);
+        //Node* tmp = _head->_next;
+        //_head->_next = tmp->_next;
+        //delete tmp;
+        //tmp = NULL;
+        
+        Earse(begin());
       }
 
-      void Insert(iterator pos,const T& x) //指定位置之后插入
+      void Insert(iterator pos,const T& x) //指定位置之前插入
       {
         Node* newnode = new Node(x);
         Node* tmp = pos._node;
-        Node* pnext = tmp->_next;
-        tmp->_next = newnode;
-        newnode->_prev = tmp;
-        newnode->_next = pnext;
-        pnext->_prev = newnode;
+        Node* pre = tmp->_prev;
+        
+        pre->_next = newnode;
+        newnode->_prev = pre;
+        newnode->_next = tmp;
+        tmp->_prev = newnode;
       }
 
-      void Earse(iterator pos)
+      iterator Earse(iterator pos)
       {
         Node* del = pos._node;
         Node* nex = del->_next;
-        del->_prev->_next = nex;
-        nex->_prev = del->_prev;;
+        Node* pre = del->_prev;
+        
+        pre->_next = nex;
+        nex->_prev = pre;
         delete del;
         del = NULL;
+        return iterator(nex); //可以用于解决迭代器失效的问题
       }
      
       bool empty()
@@ -178,12 +232,13 @@ void Test()
   l.PushBack(2);
   l.PushBack(3);
   l.PushBack(4);
-  l.PushFront(1);
+  //l.PushFront(1);
   //l.PopBack();
   //l.PopBack();
-  l.PopFront();
-  l.Insert(l.begin(),0);
-  //l.Earse(++l.begin());
+  //l.PopFront();
+  //l.Insert(l.begin(),0);
+  //l.Earse(l.begin());
+  List<int>l2(l);
 
   List<int>::iterator it = l.begin();
   while(it != l.end())
@@ -192,7 +247,15 @@ void Test()
     ++it;
   }
   cout << endl;
-  cout << l.empty() << endl;
-  cout << l.Size() << endl;
+
+  List<int>::iterator it2 = l2.begin();
+  while(it2 != l2.end())
+  {
+    cout << *it2 << "-";
+    ++it2;
+  }
+  cout << endl;
+  //cout << l.empty() << endl;
+  //cout << l.Size() << endl;
 }
 
